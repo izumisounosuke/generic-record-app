@@ -5,8 +5,8 @@ from sqlalchemy import func
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///records.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///records.db').replace('postgres://', 'postgresql://')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -273,5 +273,6 @@ def get_item_records(item_id):
     return jsonify(data)
 
 if __name__ == '__main__':
+    # 開発環境用
     app.run(debug=True)
 
