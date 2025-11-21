@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+{% block title %}ホーム - 汎用記録アプリ{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-house-door"></i> ダッシュボード
+    </h1>
+</div>
+
+{% if items_with_latest %}
+<div class="row g-4">
+    {% for item_data in items_with_latest %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100" onclick="window.location.href='{{ url_for('item_detail', item_id=item_data.item.id) }}'">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clipboard-data"></i> {{ item_data.item.name }}
+                    </h5>
+                    <form method="POST" action="{{ url_for('delete_item', item_id=item_data.item.id) }}" onclick="event.stopPropagation();" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('この項目を削除してもよろしいですか？すべての記録も削除されます。')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-tag"></i> 単位: {{ item_data.item.unit }}
+                </p>
+                {% if item_data.latest_value is not none %}
+                <p class="mb-2">
+                    <strong>最新記録:</strong> {{ item_data.latest_value }}{{ item_data.item.unit }}
+                </p>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-calendar"></i> {{ item_data.latest_date.strftime('%Y年%m月%d日') }}
+                </p>
+                {% else %}
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle"></i> まだ記録がありません
+                </p>
+                {% endif %}
+                <hr class="my-2">
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-list-ul"></i> 記録数: {{ item_data.record_count }}件
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-plus-circle"></i> 新しい記録項目を追加
+                </h5>
+                <form method="POST" action="{{ url_for('create_item') }}">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="name" placeholder="項目名（例：体重）" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="unit" placeholder="単位（例：kg）" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-plus-circle"></i> 追加
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-primary">
+            <div class="card-body text-center p-5">
+                <i class="bi bi-clipboard-plus display-1 text-primary mb-3"></i>
+                <h3 class="card-title mb-3">新しい記録項目を追加しよう</h3>
+                <p class="text-muted mb-4">
+                    あなたの生活を記録して、グラフで可視化しましょう。<br>
+                    まずは項目を追加してください。
+                </p>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-plus-circle"></i> 新しい記録項目を追加
+                        </h5>
+                        <form method="POST" action="{{ url_for('create_item') }}">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="name" placeholder="項目名（例：体重）" required autofocus>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control" name="unit" placeholder="単位（例：kg）" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-plus-circle"></i> 追加
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

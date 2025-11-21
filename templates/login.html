@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}ログイン - 汎用記録アプリ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="card-title text-center mb-4">
+                    <i class="bi bi-box-arrow-in-right"></i> ログイン
+                </h2>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">ユーザー名</label>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">パスワード</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="bi bi-box-arrow-in-right"></i> ログイン
+                    </button>
+                </form>
+                <hr>
+                <p class="text-center mb-0">
+                    アカウントをお持ちでない方は
+                    <a href="{{ url_for('register') }}" class="text-decoration-none">新規登録</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

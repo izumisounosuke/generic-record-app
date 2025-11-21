@@ -1,0 +1,287 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ item.name }}の詳細 - 汎用記録アプリ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+    #recordChart {
+        max-height: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> ダッシュボードに戻る
+    </a>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-clipboard-data"></i> {{ item.name }}
+            <small class="text-muted">（{{ item.unit }}）</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- グラフ表示エリア -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> データ推移グラフ
+                </h5>
+                {% if records %}
+                <div class="btn-group btn-group-sm" role="group" aria-label="グラフタイプ">
+                    <input type="radio" class="btn-check" name="chartType" id="chartTypeLine" value="line" checked>
+                    <label class="btn btn-outline-primary" for="chartTypeLine">
+                        <i class="bi bi-graph-up"></i> 折れ線
+                    </label>
+                    <input type="radio" class="btn-check" name="chartType" id="chartTypeBar" value="bar">
+                    <label class="btn btn-outline-primary" for="chartTypeBar">
+                        <i class="bi bi-bar-chart"></i> 棒グラフ
+                    </label>
+                    <input type="radio" class="btn-check" name="chartType" id="chartTypeArea" value="line" data-fill="true">
+                    <label class="btn btn-outline-primary" for="chartTypeArea">
+                        <i class="bi bi-graph-up-arrow"></i> エリア
+                    </label>
+                    <input type="radio" class="btn-check" name="chartType" id="chartTypePie" value="pie">
+                    <label class="btn btn-outline-primary" for="chartTypePie">
+                        <i class="bi bi-pie-chart"></i> 円グラフ
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if records %}
+                <div class="chart-container">
+                    <canvas id="recordChart"></canvas>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-5">
+                    <i class="bi bi-info-circle"></i> データがありません。記録を追加するとグラフが表示されます。
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 履歴一覧 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> 記録履歴
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>値</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr>
+                                <td>{{ record.date.strftime('%Y年%m月%d日') }}</td>
+                                <td><strong>{{ record.value }}{{ item.unit }}</strong>
+                                    {% if record.count > 1 %}
+                                    <small class="text-muted d-block">（{{ record.count }}回の記録の合計）</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">同一日の記録は加算されます</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">
+                    <i class="bi bi-info-circle"></i> まだ記録がありません
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- 新規記録フォーム -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> 新しい記録を追加
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('create_record') }}">
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">日付</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ today }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="value" class="form-label">値</label>
+                        <input type="number" class="form-control" id="value" name="value" step="0.01" min="0" placeholder="数値を入力" required>
+                        <small class="form-text text-muted">単位: {{ item.unit }}</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> 記録を追加
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 統計情報 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> 統計情報
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats %}
+                <p><strong>記録数:</strong> {{ stats.count }}件</p>
+                <p><strong>最大値:</strong> {{ stats.max }}{{ item.unit }}</p>
+                <p><strong>最小値:</strong> {{ stats.min }}{{ item.unit }}</p>
+                <p><strong>平均値:</strong> {{ stats.avg }}{{ item.unit }}</p>
+                {% else %}
+                <p class="text-muted">記録がありません</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // 今日の日付をデフォルト値に設定
+    document.getElementById('date').valueAsDate = new Date();
+
+    // グラフの描画
+    {% if records %}
+    let chart = null;
+    
+    function drawChart(chartType = 'line') {
+        fetch('{{ url_for("get_item_records", item_id=item.id) }}')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('recordChart').getContext('2d');
+                
+                // 既存のグラフを破棄
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                // 日付ラベルを日本語形式に変換
+                const labels = data.labels.map(dateStr => {
+                    const date = new Date(dateStr);
+                    return (date.getMonth() + 1) + '/' + date.getDate();
+                });
+
+                // グラフの種類に応じた設定
+                const isPie = chartType === 'pie';
+                const isArea = chartType === 'line' && document.getElementById('chartTypeArea').checked;
+                
+                // 円グラフ用の背景色配列を生成
+                const pieColors = [];
+                const colorPalette = [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)',
+                    'rgba(199, 199, 199, 0.8)',
+                    'rgba(83, 102, 255, 0.8)',
+                    'rgba(255, 99, 255, 0.8)',
+                    'rgba(99, 255, 132, 0.8)'
+                ];
+                for (let i = 0; i < data.values.length; i++) {
+                    pieColors.push(colorPalette[i % colorPalette.length]);
+                }
+                
+                const chartConfig = {
+                    type: isPie ? 'pie' : chartType,
+                    data: {
+                        labels: labels,
+                        datasets: isPie ? [{
+                            label: '{{ item.name }}',
+                            data: data.values,
+                            backgroundColor: pieColors
+                        }] : [{
+                            label: '{{ item.name }} ({{ item.unit }})',
+                            data: data.values,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: isArea ? 'rgba(75, 192, 192, 0.3)' : 'rgba(75, 192, 192, 0.2)',
+                            tension: chartType === 'line' ? 0.1 : 0,
+                            fill: isArea
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: isPie ? 'right' : 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (isPie) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            return context.label + ': ' + context.parsed + '{{ item.unit }} (' + percentage + '%)';
+                                        }
+                                        return context.parsed.y + '{{ item.unit }}';
+                                    }
+                                }
+                            }
+                        },
+                        scales: isPie ? {} : {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '{{ item.unit }}'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '日付'
+                                }
+                            }
+                        }
+                    }
+                };
+
+                chart = new Chart(ctx, chartConfig);
+            });
+    }
+
+    // 初期グラフを描画
+    drawChart('line');
+
+    // グラフタイプの変更イベント
+    document.querySelectorAll('input[name="chartType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const chartType = this.value;
+            const isArea = this.id === 'chartTypeArea';
+            drawChart(isArea ? 'line' : chartType);
+        });
+    });
+    {% endif %}
+</script>
+{% endblock %}
+
